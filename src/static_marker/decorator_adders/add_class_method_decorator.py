@@ -3,7 +3,6 @@ from __future__ import annotations
 from collections.abc import Container
 
 import libcst
-from libcst import Attribute
 from libcst import Name
 
 from ._get_self_name import get_self_name
@@ -38,12 +37,11 @@ def _replace_self_with_cls(
     function_def: libcst.FunctionDef, self_name: str
 ) -> libcst.FunctionDef:
     class SelfCallsGetter(libcst.CSTTransformer):
-
-        def leave_Attribute(
-            self, original_node: "Attribute", updated_node: "Attribute"
-        ) -> "Attribute":
-            if updated_node.value.value == self_name:
-                return updated_node.with_changes(value=Name("cls"))
+        def leave_Name(
+            self, original_node: "Name", updated_node: "Name"
+        ) -> "Name":
+            if updated_node.value == self_name:
+                return Name("cls")
             return updated_node
 
     return function_def.visit(SelfCallsGetter())

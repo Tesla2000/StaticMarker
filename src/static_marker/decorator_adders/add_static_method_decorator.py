@@ -9,7 +9,7 @@ from ._makes_use_of_self import makes_use_of_self
 def add_static_method_decorator(
     function_def: libcst.FunctionDef,
 ) -> libcst.FunctionDef:
-    if get_self_name(function_def):
+    if get_self_name(function_def) is None:
         return function_def
     if function_def.decorators:
         return function_def
