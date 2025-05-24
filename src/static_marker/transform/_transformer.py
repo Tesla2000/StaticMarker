@@ -5,9 +5,15 @@ from typing import Optional
 import libcst
 from libcst import ClassDef
 from libcst import FunctionDef
-from libcst import Module
 
 from ..config import Config
+from ..decorator_adders.add_class_method_decorator import (
+    add_class_method_decorator,
+)
+from ..decorator_adders.add_methods import add_methods
+from ..decorator_adders.add_static_method_decorator import (
+    add_static_method_decorator,
+)
 
 
 class Transformer(libcst.CSTTransformer):
@@ -15,39 +21,29 @@ class Transformer(libcst.CSTTransformer):
         super().__init__()
         self.config = config
         self._methods: set[FunctionDef] = set()
+        self._static_or_class_methods: set[FunctionDef] = set()
 
     def leave_FunctionDef(
         self, original_node: "FunctionDef", updated_node: "FunctionDef"
     ) -> "FunctionDef":
         if original_node not in self._methods:
             return updated_node
-        if (
-            updated_node.params.params
-            and updated_node.params.params[0].name.value
-            in Module([updated_node.body]).code
-        ):
+        if original_node in self._static_or_class_methods:
             return updated_node
-        if updated_node.decorators:
-            return updated_node
-        updated_node = updated_node.with_changes(
-            decorators=[
-                libcst.Decorator(decorator=libcst.Name("staticmethod"))
-            ]
+        updated_node = add_static_method_decorator(updated_node)
+        updated_node = add_class_method_decorator(
+            updated_node, self._static_or_class_method_names
         )
-        params = updated_node.params.with_changes(
-            params=updated_node.params.params[1:]
-        )
-        updated_node = updated_node.with_changes(params=params)
         return updated_node
 
-    def visit_ClassDef(self, node: "ClassDef") -> Optional[bool]:
-        class MethodGetter(libcst.CSTVisitor):
-            def visit_FunctionDef(
-                _, function_node: "FunctionDef"
-            ) -> Optional[bool]:
-                self._methods.add(function_node)
+    @property
+    def _static_or_class_method_names(self) -> frozenset[str]:
+        return frozenset(
+            method.name.value for method in self._static_or_class_methods
+        )
 
-        node.visit(MethodGetter())
+    def visit_ClassDef(self, node: "ClassDef") -> Optional[bool]:
+        add_methods(node, self._methods, self._static_or_class_methods)
         return super().visit_ClassDef(node)
 
 
