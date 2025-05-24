@@ -25,12 +25,14 @@ def main() -> int:
         return _main(config)
 
 
-def _main(config: Config):
+def _main(config: Config) -> int:
+    paths = tuple(map(Path, config.pos_args))
     fail = 0
-    paths = map(Path, config.pos_args)
-    for filepath in filter(lambda path: path.suffix == ".py", paths):
-        fail |= modify_file(
-            filepath,
-            config=config,
-        )
+    run = 1
+    while run:
+        run = 0
+        for filepath in filter(lambda path: path.suffix == ".py", paths):
+            modified = modify_file(filepath, config=config)
+            run |= modified
+            fail |= modified
     return fail

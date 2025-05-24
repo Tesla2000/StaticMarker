@@ -7,6 +7,7 @@ from libcst import ClassDef
 from libcst import FunctionDef
 
 from ..config import Config
+from ..decorator_adders._get_self_name import get_self_name
 from ..decorator_adders.add_class_method_decorator import (
     add_class_method_decorator,
 )
@@ -29,6 +30,9 @@ class Transformer(libcst.CSTTransformer):
         if original_node not in self._methods:
             return updated_node
         if original_node in self._static_or_class_methods:
+            return updated_node
+        self_name = get_self_name(updated_node)
+        if self_name == "_":
             return updated_node
         updated_node = add_static_method_decorator(updated_node)
         updated_node = add_class_method_decorator(
