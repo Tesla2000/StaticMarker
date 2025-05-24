@@ -1,0 +1,7 @@
+-   id: static_marker
+    name: StaticMarker
+    description: Marks methods as static if self is not used
+    entry: static_marker
+    language: python
+    types: [python]
+    files: ''
