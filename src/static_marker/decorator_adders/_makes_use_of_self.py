@@ -14,6 +14,9 @@ def makes_use_of_self(
     function_def: libcst.FunctionDef,
     static_or_class_method_names: Container[str],
 ) -> bool:
+    function_name = function_def.name.value
+    if function_name.startswith("__") and function_name.endswith("__"):
+        return True
     self_name = get_self_name(function_def)
 
     class SelfCallsGetter(libcst.CSTVisitor):
