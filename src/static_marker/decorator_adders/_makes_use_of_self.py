@@ -5,6 +5,7 @@ from typing import Optional
 
 import libcst
 from libcst import Attribute
+from libcst import Module
 from libcst import Name
 
 from ._get_self_name import get_self_name
@@ -16,6 +17,8 @@ def makes_use_of_self(
 ) -> bool:
     function_name = function_def.name.value
     if function_name.startswith("__") and function_name.endswith("__"):
+        return True
+    if Module([function_def.body]).code.strip() in ("pass", "..."):
         return True
     self_name = get_self_name(function_def)
 
